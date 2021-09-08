@@ -24,6 +24,7 @@ class GameViewModel (): ViewModel() {
     //TODO
     // king button
 
+    // initialize the game when fragment loads for the first time.
     init {
         // initialize board states.
         boardStates.clear()
@@ -43,6 +44,8 @@ class GameViewModel (): ViewModel() {
         }
     }
 
+    // TODO
+    // check if the button clicked is king or not.
     fun clicked(i: Int, j:Int){
         if(boardStates[i][j] == 0){
             clear()
@@ -88,6 +91,23 @@ class GameViewModel (): ViewModel() {
                 if(boardStates[i + 1][j + 1] == 0){
                     boardButtons[i + 1][j + 1].setImageResource(R.drawable.ic_yellow_button)
                     boardStates[i + 1][j + 1] = 3
+                }
+            }
+        }
+
+        if(kingStates[i][j]){
+            if(i > 0){
+                if(j > 0){
+                    if(boardStates[i - 1][j - 1] == 0){
+                        boardButtons[i - 1][j - 1].setImageResource(R.drawable.ic_yellow_button)
+                        boardStates[i - 1][j - 1] = 3
+                    }
+                }
+                if(j < 7){
+                    if(boardStates[i - 1][j + 1] == 0){
+                        boardButtons[i - 1][j + 1].setImageResource(R.drawable.ic_yellow_button)
+                        boardStates[i - 1][j + 1] = 3
+                    }
                 }
             }
         }
@@ -173,6 +193,24 @@ class GameViewModel (): ViewModel() {
                 }
             }
         }
+
+        if(kingStates[i][j]){
+            if(i < 7){
+                if(j > 0){
+                    if(boardStates[i + 1][j - 1] == 0){
+                        boardButtons[i + 1][j - 1].setImageResource(R.drawable.ic_blue_button)
+                        boardStates[i + 1][j - 1] = 3
+                    }
+                }
+                if(j < 7){
+                    if(boardStates[i + 1][j + 1] == 0){
+                        boardButtons[i + 1][j + 1].setImageResource(R.drawable.ic_blue_button)
+                        boardStates[i + 1][j + 1] = 3
+                    }
+                }
+            }
+        }
+
         prevClicked[0] = i
         prevClicked[1] = j
     }
@@ -180,6 +218,7 @@ class GameViewModel (): ViewModel() {
     // black players potential moves with capturing enemy.
     // this function uses recursive function below to get multiple captures.
     private fun paintBlueEat(i: Int, j:Int){
+        blackWillEat.clear()
         if(i > 1){
             if(j > 1){
                 if(boardStates[i - 2][j - 2] == 0 && boardStates[i - 1][j - 1] == 1){
@@ -226,7 +265,7 @@ class GameViewModel (): ViewModel() {
                     boardStates[i][j] = 0
                     boardButtons[i][j].setImageResource(R.drawable.ic_white_button)
 
-                    val moveRight = (mutableListOf(i + 2, j + 2) + blackWillEat[index].drop(2)) as MutableList<Int>
+                    val moveRight = (mutableListOf(i - 2, j + 2) + blackWillEat[index].drop(2)) as MutableList<Int>
                     moveRight.add(1)
                     blackWillEat.add(moveRight)
                     paintRecursiveBlue(i - 2,j + 2, blackWillEat.size - 1)
@@ -237,7 +276,7 @@ class GameViewModel (): ViewModel() {
 
     // move a button to the clicked location.
     // clear previous place and replace new place.
-    // TODO
+    // TODO might be done
     // change corresponding indexes at kings array.
     private fun moveButton(i: Int, j:Int){
         val x = prevClicked[0]
@@ -247,8 +286,18 @@ class GameViewModel (): ViewModel() {
             boardButtons[x][y].setImageResource(R.drawable.ic_white_button)
             boardStates[x][y] = 0
             //put new button
-            boardButtons[i][j].setImageResource(R.drawable.ic_red_button)
             boardStates[i][j] = 1
+            // carry on changes and check if it became a king.
+            kingStates[i][j] = kingStates[x][y]
+            kingStates[x][y] = false
+            if (i == 7)
+                kingStates[i][j] = true
+
+            if(kingStates[i][j])
+                boardButtons[i][j].setImageResource(R.drawable.ic_orange_button)
+            else
+                boardButtons[i][j].setImageResource(R.drawable.ic_red_button)
+
             if(redHasToEat)
                 moveButtonEat(x,y,i,j)
 
@@ -259,8 +308,18 @@ class GameViewModel (): ViewModel() {
             boardButtons[x][y].setImageResource(R.drawable.ic_white_button)
             boardStates[x][y] = 0
             //put new button
-            boardButtons[i][j].setImageResource(R.drawable.ic_black_button)
             boardStates[i][j] = 2
+            // carry on changes and check if it became a king.
+            kingStates[i][j] = kingStates[x][y]
+            kingStates[x][y] = false
+            if (i == 0)
+                kingStates[i][j] = true
+            if(kingStates[i][j])
+                boardButtons[i][j].setImageResource(R.drawable.ic_green_button)
+            else
+                boardButtons[i][j].setImageResource(R.drawable.ic_black_button)
+
+
             if(blackHasToEat)
                 moveButtonEat(x,y,i,j)
 
@@ -274,7 +333,7 @@ class GameViewModel (): ViewModel() {
     }
 
     // delete eaten buttons after a button moved.
-    // TODO
+    // TODO might be done
     // make corresponding index false in kings array.
     private fun moveButtonEat(x: Int, y: Int, i:Int, j:Int){
 
@@ -286,18 +345,21 @@ class GameViewModel (): ViewModel() {
                     break
                 }
             }
+            // previous location x,y. target location i,j.
             var xx = x
             var yy = y
             for(i in 2 until redTarget.size){
                 if(redTarget[i] == 0){
                     boardButtons[xx + 1][yy - 1].setImageResource(R.drawable.ic_white_button)
                     boardStates[xx + 1][yy - 1] = 0
+                    kingStates[xx + 1][yy - 1] = false
                     xx += 2
                     yy -= 2
                 }
                 else{
                     boardButtons[xx + 1][yy + 1].setImageResource(R.drawable.ic_white_button)
                     boardStates[xx + 1][yy + 1] = 0
+                    kingStates[xx + 1][yy + 1] = false
                     xx += 2
                     yy += 2
                 }
@@ -319,12 +381,14 @@ class GameViewModel (): ViewModel() {
                 if(blackTarget[i] == 0){
                     boardButtons[xx - 1][yy - 1].setImageResource(R.drawable.ic_white_button)
                     boardStates[xx - 1][yy - 1] = 0
+                    kingStates[xx - 1][yy - 1] = false
                     xx -= 2
                     yy -= 2
                 }
                 else{
                     boardButtons[xx - 1][yy + 1].setImageResource(R.drawable.ic_white_button)
                     boardStates[xx - 1][yy + 1] = 0
+                    kingStates[xx - 1][yy + 1] = false
                     xx -= 2
                     yy += 2
                 }
@@ -373,7 +437,7 @@ class GameViewModel (): ViewModel() {
                 }
             }
             if(boardStates[i][6] == 1) {
-                if (boardStates[i + 2][4] == 0 && boardStates[i + 1][3] == 2) {
+                if (boardStates[i + 2][4] == 0 && boardStates[i + 1][5] == 2) {
                     return true
                 }
             }

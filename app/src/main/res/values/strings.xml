@@ -7,4 +7,6 @@
     <string name="linear_tag">linear</string>
     <string name="player_turn">Red Moves</string>
     <string name="new_game_text">NEW GAME</string>
+    <string name="red_king_text">Red King: Orange</string>
+    <string name="black_king_text">Black King: Green</string>
 </resources>
