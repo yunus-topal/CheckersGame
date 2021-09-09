@@ -1,6 +1,5 @@
 package com.example.checkersgame
 
-import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.lifecycle.ViewModel
@@ -17,12 +16,15 @@ class GameViewModel (): ViewModel() {
     private var blackButtonCount = 12
     private var redHasToEat = false
     private var blackHasToEat = false
-
+    private var isGameOver = false
     private val redWillEat = mutableListOf<MutableList<Int>>()
     private val blackWillEat = mutableListOf<MutableList<Int>>()
 
     //TODO
-    // king button
+    // king button +
+    // king paint +
+    // king moveButtonEat ?
+    // king check +
 
     // initialize the game when fragment loads for the first time.
     init {
@@ -44,39 +46,274 @@ class GameViewModel (): ViewModel() {
         }
     }
 
-    // TODO
+    // TODO might be done
     // check if the button clicked is king or not.
     fun clicked(i: Int, j:Int){
-        if(boardStates[i][j] == 0){
-            clear()
-        }
-        else if(boardStates[i][j] == 1){
-            clear()
-            if(turnRed){
-                if(redHasToEat)
-                    paintYellowEat(i, j)
-                else
-                    paintYellow(i, j)
+        if(!isGameOver){
+            if(boardStates[i][j] == 0){
+                clear()
+            }
+            else if(boardStates[i][j] == 1){
+                clear()
+                if(turnRed){
+                    if(redHasToEat)
+                        if(kingStates[i][j])
+                            paintYellowEatKing(i, j)
+                        else
+                            paintYellowEat(i, j)
+                    else
+                        paintYellow(i, j)
+                }
+            }
+            else if(boardStates[i][j] == 2){
+                clear()
+                if(!turnRed){
+                    if (blackHasToEat)
+                        if(kingStates[i][j])
+                            paintBlueEatKing(i, j)
+                        else
+                            paintBlueEat(i, j)
+                    else
+                        paintBlue(i, j)
+                }
+            }
+            else if(boardStates[i][j] == 3){
+                clear()
+                moveButton(i, j)
             }
         }
-        else if(boardStates[i][j] == 2){
-            clear()
-            if(!turnRed){
-                if (blackHasToEat)
-                    paintBlueEat(i, j)
-                else
-                    paintBlue(i, j)
+    }
+
+    private fun paintYellowEatKing(i: Int, j:Int){
+        //CLEAR!!
+        redWillEat.clear()
+        if(i < 6){
+            // bottom left
+            if(j > 1){
+                if(boardStates[i + 2][j - 2] == 0 && boardStates[i + 1][j - 1] == 2){
+                    boardButtons[i + 2][j - 2].setImageResource(R.drawable.ic_yellow_button)
+                    boardStates[i + 2][j - 2] = 3
+
+                    redWillEat.add((mutableListOf(i+2, j-2, 0)))
+                    paintRecursiveYellowKing(i + 2, j - 2,0)
+                }
+            }
+            // bottom right
+            if(j < 6){
+                if(boardStates[i + 2][j + 2] == 0 && boardStates[i + 1][j + 1] == 2){
+                    boardButtons[i + 2][j + 2].setImageResource(R.drawable.ic_yellow_button)
+                    boardStates[i + 2][j + 2] = 3
+
+                    redWillEat.add((mutableListOf(i+2, j+2, 1)))
+                    paintRecursiveYellowKing(i + 2, j + 2, redWillEat.size - 1)
+                }
             }
         }
-        else if(boardStates[i][j] == 3){
-            clear()
-            moveButton(i, j)
+        if(i > 1){
+            // top left
+            if(j > 1){
+                if(boardStates[i - 2][j - 2] == 0 && boardStates[i - 1][j - 1] == 2){
+                    boardButtons[i - 2][j - 2].setImageResource(R.drawable.ic_yellow_button)
+                    boardStates[i - 2][j - 2] = 3
+
+                    redWillEat.add((mutableListOf(i-2, j-2, 2)))
+                    paintRecursiveYellowKing(i - 2, j - 2, redWillEat.size - 1)
+                }
+            }
+            // top right
+            if(j < 6){
+                if(boardStates[i - 2][j + 2] == 0 && boardStates[i - 1][j + 1] == 2){
+                    boardButtons[i - 2][j + 2].setImageResource(R.drawable.ic_yellow_button)
+                    boardStates[i - 2][j + 2] = 3
+
+                    redWillEat.add((mutableListOf(i-2, j+2, 3)))
+                    paintRecursiveYellowKing(i - 2, j + 2, redWillEat.size - 1)
+                }
+            }
+        }
+        prevClicked[0] = i
+        prevClicked[1] = j
+    }
+
+    private fun paintBlueEatKing(i: Int, j:Int){
+        //CLEAR!!
+        blackWillEat.clear()
+        if(i < 6){
+            // bottom left
+            if(j > 1){
+                if(boardStates[i + 2][j - 2] == 0 && boardStates[i + 1][j - 1] == 1){
+                    boardButtons[i + 2][j - 2].setImageResource(R.drawable.ic_blue_button)
+                    boardStates[i + 2][j - 2] = 3
+
+                    blackWillEat.add((mutableListOf(i+2, j-2, 0)))
+                    paintRecursiveBlueKing(i + 2, j - 2,0)
+                }
+            }
+            // bottom right
+            if(j < 6){
+                if(boardStates[i + 2][j + 2] == 0 && boardStates[i + 1][j + 1] == 1){
+                    boardButtons[i + 2][j + 2].setImageResource(R.drawable.ic_blue_button)
+                    boardStates[i + 2][j + 2] = 3
+
+                    blackWillEat.add((mutableListOf(i+2, j+2, 1)))
+                    paintRecursiveBlueKing(i + 2, j + 2, blackWillEat.size - 1)
+                }
+            }
+        }
+        if(i > 1){
+            // top left
+            if(j > 1){
+                if(boardStates[i - 2][j - 2] == 0 && boardStates[i - 1][j - 1] == 1){
+                    boardButtons[i - 2][j - 2].setImageResource(R.drawable.ic_blue_button)
+                    boardStates[i - 2][j - 2] = 3
+
+                    blackWillEat.add((mutableListOf(i-2, j-2, 2)))
+                    paintRecursiveBlueKing(i - 2, j - 2, blackWillEat.size - 1)
+                }
+            }
+            // top right
+            if(j < 6){
+                if(boardStates[i - 2][j + 2] == 0 && boardStates[i - 1][j + 1] == 1){
+                    boardButtons[i - 2][j + 2].setImageResource(R.drawable.ic_blue_button)
+                    boardStates[i - 2][j + 2] = 3
+
+                    blackWillEat.add((mutableListOf(i-2, j+2, 3)))
+                    paintRecursiveBlueKing(i - 2, j + 2, blackWillEat.size - 1)
+                }
+            }
+        }
+        prevClicked[0] = i
+        prevClicked[1] = j
+    }
+
+    private fun paintRecursiveYellowKing(i: Int, j:Int, index: Int){
+        if(redWillEat[index].size > 14)
+            return
+
+        if(i < 6){
+            if(j > 1){
+                if(boardStates[i + 2][j - 2] == 0 && boardStates[i + 1][j - 1] == 2 && redWillEat[index].last() != 3){
+                    boardButtons[i + 2][j - 2].setImageResource(R.drawable.ic_yellow_button)
+                    boardStates[i + 2][j - 2] = 3
+                    boardStates[i][j] = 0
+                    boardButtons[i][j].setImageResource(R.drawable.ic_white_button)
+
+                    val moveBottomLeft = (mutableListOf(i + 2, j - 2) + redWillEat[index].drop(2)) as MutableList<Int>
+                    moveBottomLeft.add(0)
+                    redWillEat.add(moveBottomLeft)
+                    paintRecursiveYellowKing(i + 2,j - 2, redWillEat.size - 1)
+                }
+            }
+            if(j < 6){
+                if(boardStates[i + 2][j + 2] == 0 && boardStates[i + 1][j + 1] == 2 && redWillEat[index].last() != 2){
+                    boardButtons[i + 2][j + 2].setImageResource(R.drawable.ic_yellow_button)
+                    boardStates[i + 2][j + 2] = 3
+                    boardStates[i][j] = 0
+                    boardButtons[i][j].setImageResource(R.drawable.ic_white_button)
+
+                    val moveBottomRight = (mutableListOf(i + 2, j + 2) + redWillEat[index].drop(2)) as MutableList<Int>
+                    moveBottomRight.add(1)
+                    redWillEat.add(moveBottomRight)
+                    paintRecursiveYellowKing(i + 2,j + 2, redWillEat.size - 1)
+                }
+            }
         }
 
+        if(i > 1){
+            if(j > 1){
+                if(boardStates[i - 2][j - 2] == 0 && boardStates[i - 1][j - 1] == 2 && redWillEat[index].last() != 1){
+                    boardButtons[i - 2][j - 2].setImageResource(R.drawable.ic_yellow_button)
+                    boardStates[i - 2][j - 2] = 3
+                    boardStates[i][j] = 0
+                    boardButtons[i][j].setImageResource(R.drawable.ic_white_button)
+
+                    val moveTopLeft = (mutableListOf(i - 2, j - 2) + redWillEat[index].drop(2)) as MutableList<Int>
+                    moveTopLeft.add(2)
+                    redWillEat.add(moveTopLeft)
+                    paintRecursiveYellowKing(i - 2,j - 2, redWillEat.size - 1)
+                }
+            }
+            if(j < 6){
+                if(boardStates[i - 2][j + 2] == 0 && boardStates[i - 1][j + 1] == 2 && redWillEat[index].last() != 0){
+                    boardButtons[i - 2][j + 2].setImageResource(R.drawable.ic_yellow_button)
+                    boardStates[i - 2][j + 2] = 3
+                    boardStates[i][j] = 0
+                    boardButtons[i][j].setImageResource(R.drawable.ic_white_button)
+
+                    val moveTopRight = (mutableListOf(i - 2, j + 2) + redWillEat[index].drop(2)) as MutableList<Int>
+                    moveTopRight.add(3)
+                    redWillEat.add(moveTopRight)
+                    paintRecursiveYellowKing(i - 2,j + 2, redWillEat.size - 1)
+                }
+            }
+        }
+    }
+
+    private fun paintRecursiveBlueKing(i: Int, j:Int, index: Int){
+        if(blackWillEat[index].size > 14)
+            return
+
+        if(i < 6){
+            if(j > 1){
+                if(boardStates[i + 2][j - 2] == 0 && boardStates[i + 1][j - 1] == 1 && blackWillEat[index].last() != 3){
+                    boardButtons[i + 2][j - 2].setImageResource(R.drawable.ic_blue_button)
+                    boardStates[i + 2][j - 2] = 3
+                    boardStates[i][j] = 0
+                    boardButtons[i][j].setImageResource(R.drawable.ic_white_button)
+
+                    val moveBottomLeft = (mutableListOf(i + 2, j - 2) + blackWillEat[index].drop(2)) as MutableList<Int>
+                    moveBottomLeft.add(0)
+                    blackWillEat.add(moveBottomLeft)
+                    paintRecursiveBlueKing(i + 2,j - 2, blackWillEat.size - 1)
+                }
+            }
+            if(j < 6){
+                if(boardStates[i + 2][j + 2] == 0 && boardStates[i + 1][j + 1] == 1 && blackWillEat[index].last() != 2){
+                    boardButtons[i + 2][j + 2].setImageResource(R.drawable.ic_blue_button)
+                    boardStates[i + 2][j + 2] = 3
+                    boardStates[i][j] = 0
+                    boardButtons[i][j].setImageResource(R.drawable.ic_white_button)
+
+                    val moveBottomRight = (mutableListOf(i + 2, j + 2) + blackWillEat[index].drop(2)) as MutableList<Int>
+                    moveBottomRight.add(1)
+                    blackWillEat.add(moveBottomRight)
+                    paintRecursiveBlueKing(i + 2,j + 2, blackWillEat.size - 1)
+                }
+            }
+        }
+
+        if(i > 1){
+            if(j > 1){
+                if(boardStates[i - 2][j - 2] == 0 && boardStates[i - 1][j - 1] == 1 && blackWillEat[index].last() != 1){
+                    boardButtons[i - 2][j - 2].setImageResource(R.drawable.ic_blue_button)
+                    boardStates[i - 2][j - 2] = 3
+                    boardStates[i][j] = 0
+                    boardButtons[i][j].setImageResource(R.drawable.ic_white_button)
+
+                    val moveTopLeft = (mutableListOf(i - 2, j - 2) + blackWillEat[index].drop(2)) as MutableList<Int>
+                    moveTopLeft.add(2)
+                    blackWillEat.add(moveTopLeft)
+                    paintRecursiveBlueKing(i - 2,j - 2, blackWillEat.size - 1)
+                }
+            }
+            if(j < 6){
+                if(boardStates[i - 2][j + 2] == 0 && boardStates[i - 1][j + 1] == 1 && blackWillEat[index].last() != 0){
+                    boardButtons[i - 2][j + 2].setImageResource(R.drawable.ic_blue_button)
+                    boardStates[i - 2][j + 2] = 3
+                    boardStates[i][j] = 0
+                    boardButtons[i][j].setImageResource(R.drawable.ic_white_button)
+
+                    val moveTopRight = (mutableListOf(i - 2, j + 2) + blackWillEat[index].drop(2)) as MutableList<Int>
+                    moveTopRight.add(3)
+                    blackWillEat.add(moveTopRight)
+                    paintRecursiveBlueKing(i - 2,j + 2, blackWillEat.size - 1)
+                }
+            }
+        }
     }
 
     // red players potential moves without capturing enemy.
-    // TODO
+    // TODO might be done
     // kings will move in 4 directions instead of 2.
     private fun paintYellow(i: Int, j:Int){
         // left, right and bottom. + - j, + i
@@ -176,7 +413,7 @@ class GameViewModel (): ViewModel() {
     }
 
     // black players potential moves without capturing enemy.
-    // TODO
+    // TODO might be done
     // kings will move in 4 directions instead of 2.
     private fun paintBlue(i: Int, j:Int){
         if(i > 0){
@@ -225,7 +462,7 @@ class GameViewModel (): ViewModel() {
                     boardButtons[i - 2][j - 2].setImageResource(R.drawable.ic_blue_button)
                     boardStates[i - 2][j - 2] = 3
 
-                    blackWillEat.add((mutableListOf(i-2, j-2, 0)))
+                    blackWillEat.add((mutableListOf(i-2, j-2, 2)))
                     paintRecursiveBlue(i - 2, j - 2,0)
                 }
             }
@@ -234,8 +471,8 @@ class GameViewModel (): ViewModel() {
                     boardButtons[i - 2][j + 2].setImageResource(R.drawable.ic_blue_button)
                     boardStates[i - 2][j + 2] = 3
 
-                    blackWillEat.add((mutableListOf(i-2, j+2, 1)))
-                    paintRecursiveYellow(i - 2, j + 2, blackWillEat.size - 1)
+                    blackWillEat.add((mutableListOf(i-2, j+2, 3)))
+                    paintRecursiveBlue(i - 2, j + 2, blackWillEat.size - 1)
                 }
             }
         }
@@ -253,7 +490,7 @@ class GameViewModel (): ViewModel() {
                     boardButtons[i][j].setImageResource(R.drawable.ic_white_button)
 
                     val moveLeft = (mutableListOf(i - 2, j - 2) + blackWillEat[index].drop(2)) as MutableList<Int>
-                    moveLeft.add(0)
+                    moveLeft.add(2)
                     blackWillEat.add(moveLeft)
                     paintRecursiveBlue(i - 2,j - 2, blackWillEat.size - 1)
                 }
@@ -266,7 +503,7 @@ class GameViewModel (): ViewModel() {
                     boardButtons[i][j].setImageResource(R.drawable.ic_white_button)
 
                     val moveRight = (mutableListOf(i - 2, j + 2) + blackWillEat[index].drop(2)) as MutableList<Int>
-                    moveRight.add(1)
+                    moveRight.add(3)
                     blackWillEat.add(moveRight)
                     paintRecursiveBlue(i - 2,j + 2, blackWillEat.size - 1)
                 }
@@ -298,8 +535,9 @@ class GameViewModel (): ViewModel() {
             else
                 boardButtons[i][j].setImageResource(R.drawable.ic_red_button)
 
-            if(redHasToEat)
+            if(redHasToEat){
                 moveButtonEat(x,y,i,j)
+            }
 
             blackHasToEat = checkBlackEat()
         }
@@ -320,20 +558,32 @@ class GameViewModel (): ViewModel() {
                 boardButtons[i][j].setImageResource(R.drawable.ic_black_button)
 
 
-            if(blackHasToEat)
+            if(blackHasToEat){
                 moveButtonEat(x,y,i,j)
+            }
 
             redHasToEat = checkRedEat()
         }
         turnRed = !turnRed
-        if (turnRed)
-            playerTurn!!.text = "Red Moves"
-        else
-            playerTurn!!.text = "Black Moves"
+
+        if(blackButtonCount == 0){
+            playerTurn!!.text = "Red Wins!"
+            isGameOver = true
+        }
+        else if(redButtonCount == 0){
+            playerTurn!!.text = "Black Wins!"
+            isGameOver = true
+        }
+        else{
+            if (turnRed)
+                playerTurn!!.text = "Red Moves"
+            else
+                playerTurn!!.text = "Black Moves"
+        }
     }
 
     // delete eaten buttons after a button moved.
-    // TODO might be done
+    // TODO might be done NO
     // make corresponding index false in kings array.
     private fun moveButtonEat(x: Int, y: Int, i:Int, j:Int){
 
@@ -356,17 +606,32 @@ class GameViewModel (): ViewModel() {
                     xx += 2
                     yy -= 2
                 }
-                else{
+                else if (redTarget[i] == 1){
                     boardButtons[xx + 1][yy + 1].setImageResource(R.drawable.ic_white_button)
                     boardStates[xx + 1][yy + 1] = 0
                     kingStates[xx + 1][yy + 1] = false
                     xx += 2
                     yy += 2
                 }
+                else if(redTarget[i] == 2){
+                    boardButtons[xx - 1][yy - 1].setImageResource(R.drawable.ic_white_button)
+                    boardStates[xx - 1][yy - 1] = 0
+                    kingStates[xx - 1][yy - 1] = false
+                    xx -= 2
+                    yy -= 2
+                }
+                else if(redTarget[i] == 3){
+                    boardButtons[xx - 1][yy + 1].setImageResource(R.drawable.ic_white_button)
+                    boardStates[xx - 1][yy + 1] = 0
+                    kingStates[xx - 1][yy + 1] = false
+                    xx -= 2
+                    yy += 2
+                }
                 blackButtonCount--
             }
 
         }
+
         else{
             var blackTarget = listOf(0,0)
             for(item in blackWillEat){
@@ -375,17 +640,32 @@ class GameViewModel (): ViewModel() {
                     break
                 }
             }
+            // previous location x,y. target location i,j.
             var xx = x
             var yy = y
             for(i in 2 until blackTarget.size){
                 if(blackTarget[i] == 0){
+                    boardButtons[xx + 1][yy - 1].setImageResource(R.drawable.ic_white_button)
+                    boardStates[xx + 1][yy - 1] = 0
+                    kingStates[xx + 1][yy - 1] = false
+                    xx += 2
+                    yy -= 2
+                }
+                else if (blackTarget[i] == 1){
+                    boardButtons[xx + 1][yy + 1].setImageResource(R.drawable.ic_white_button)
+                    boardStates[xx + 1][yy + 1] = 0
+                    kingStates[xx + 1][yy + 1] = false
+                    xx += 2
+                    yy += 2
+                }
+                else if(blackTarget[i] == 2){
                     boardButtons[xx - 1][yy - 1].setImageResource(R.drawable.ic_white_button)
                     boardStates[xx - 1][yy - 1] = 0
                     kingStates[xx - 1][yy - 1] = false
                     xx -= 2
                     yy -= 2
                 }
-                else{
+                else if(blackTarget[i] == 3){
                     boardButtons[xx - 1][yy + 1].setImageResource(R.drawable.ic_white_button)
                     boardStates[xx - 1][yy + 1] = 0
                     kingStates[xx - 1][yy + 1] = false
@@ -397,6 +677,7 @@ class GameViewModel (): ViewModel() {
         }
 
     }
+
 
     // clear yellow or blue buttons
     private fun clear(){
@@ -412,38 +693,34 @@ class GameViewModel (): ViewModel() {
     }
 
     // check whether red player has to eat or not.
-    // TODO
+    // TODO might be done
     // kings will have special check
     private fun checkRedEat(): Boolean{
-        for(i in 0..5){
-            if(boardStates[i][0] == 1) {
-                if (boardStates[i + 2][2] == 0 && boardStates[i + 1][1] == 2) {
-                    return true
-                }
-            }
-            if(boardStates[i][1] == 1) {
-                if (boardStates[i + 2][3] == 0 && boardStates[i + 1][2] == 2) {
-                    return true
-                }
-            }
-            for(j in 2..5){
+        for(i in 0..7){
+            for(j in 0..7){
                 if(boardStates[i][j] == 1) {
-                    if (boardStates[i + 2][j - 2] == 0 && boardStates[i + 1][j - 1] == 2) {
-                        return true
+                    // for everyone
+                    if(i < 6){
+                        if (j < 6){
+                            if (boardStates[i + 2][j + 2] == 0 && boardStates[i + 1][j + 1] == 2)
+                                return true
+                        }
+                        if (j > 1){
+                            if (boardStates[i + 2][j - 2] == 0 && boardStates[i + 1][j - 1] == 2)
+                                return true
+                        }
                     }
-                    if (boardStates[i + 2][j + 2] == 0 && boardStates[i + 1][j + 1] == 2) {
-                        return true
+                    // for kings
+                    if(kingStates[i][j] && i > 1){
+                        if (j < 6){
+                            if (boardStates[i - 2][j + 2] == 0 && boardStates[i - 1][j + 1] == 2)
+                                return true
+                        }
+                        if (j > 1){
+                            if (boardStates[i - 2][j - 2] == 0 && boardStates[i - 1][j - 1] == 2)
+                                return true
+                        }
                     }
-                }
-            }
-            if(boardStates[i][6] == 1) {
-                if (boardStates[i + 2][4] == 0 && boardStates[i + 1][5] == 2) {
-                    return true
-                }
-            }
-            if(boardStates[i][7] == 1) {
-                if (boardStates[i + 2][5] == 0 && boardStates[i + 1][6] == 2) {
-                    return true
                 }
             }
         }
@@ -451,38 +728,34 @@ class GameViewModel (): ViewModel() {
     }
 
     // check whether black player has to eat or not.
-    // TODO
+    // TODO might be done
     // kings will have special check
     private fun checkBlackEat(): Boolean{
-        for(i in 2..7){
-            if(boardStates[i][0] == 2) {
-                if (boardStates[i - 2][2] == 0 && boardStates[i - 1][1] == 1) {
-                    return true
-                }
-            }
-            if(boardStates[i][1] == 2) {
-                if (boardStates[i - 2][3] == 0 && boardStates[i - 1][2] == 1) {
-                    return true
-                }
-            }
-            for(j in 2..5){
+        for(i in 0..7){
+            for(j in 0..7){
                 if(boardStates[i][j] == 2) {
-                    if (boardStates[i - 2][j - 2] == 0 && boardStates[i - 1][j - 1] == 1) {
-                        return true
+                    // for everyone
+                    if(i > 1){
+                        if (j < 6){
+                            if (boardStates[i - 2][j + 2] == 0 && boardStates[i - 1][j + 1] == 1)
+                                return true
+                        }
+                        if (j > 1){
+                            if (boardStates[i - 2][j - 2] == 0 && boardStates[i - 1][j - 1] == 1)
+                                return true
+                        }
                     }
-                    if (boardStates[i - 2][j + 2] == 0 && boardStates[i - 1][j + 1] == 1) {
-                        return true
+                    // for kings
+                    if(kingStates[i][j] && i < 6){
+                        if (j < 6){
+                            if (boardStates[i + 2][j + 2] == 0 && boardStates[i + 1][j + 1] == 1)
+                                return true
+                        }
+                        if (j > 1){
+                            if (boardStates[i + 2][j - 2] == 0 && boardStates[i + 1][j - 1] == 1)
+                                return true
+                        }
                     }
-                }
-            }
-            if(boardStates[i][6] == 2) {
-                if (boardStates[i - 2][4] == 0 && boardStates[i - 1][5] == 1) {
-                    return true
-                }
-            }
-            if(boardStates[i][7] == 2) {
-                if (boardStates[i - 2][5] == 0 && boardStates[i - 1][6] == 1) {
-                    return true
                 }
             }
         }
@@ -527,9 +800,175 @@ class GameViewModel (): ViewModel() {
         blackButtonCount = 12
         redHasToEat = false
         blackHasToEat = false
+        isGameOver = false
         redWillEat.clear()
         blackWillEat.clear()
 
     }
 
 }
+
+/**
+ DEPO
+
+ private fun paintBlueEatKing(i: Int, j:Int){
+ //CLEAR!!
+ blackWillEat.clear()
+ if(i < 6){
+ // bottom left
+ if(j > 1){
+ if(boardStates[i + 2][j - 2] == 0 && boardStates[i + 1][j - 1] == 1){
+ boardButtons[i + 2][j - 2].setImageResource(R.drawable.ic_blue_button)
+ boardStates[i + 2][j - 2] = 3
+
+ blackWillEat.add((mutableListOf(i+2, j-2, 2)))
+ paintRecursiveBlueKing(i + 2, j - 2, blackWillEat.size - 1)
+ }
+ }
+ // bottom right
+ if(j < 6){
+ if(boardStates[i + 2][j + 2] == 0 && boardStates[i + 1][j + 1] == 1){
+ boardButtons[i + 2][j + 2].setImageResource(R.drawable.ic_blue_button)
+ boardStates[i + 2][j + 2] = 3
+
+ blackWillEat.add((mutableListOf(i+2, j+2, 3)))
+ paintRecursiveBlueKing(i + 2, j + 2, blackWillEat.size - 1)
+ }
+ }
+ }
+ if(i > 1){
+ // top left
+ if(j > 1){
+ if(boardStates[i - 2][j - 2] == 0 && boardStates[i - 1][j - 1] == 1){
+ boardButtons[i - 2][j - 2].setImageResource(R.drawable.ic_blue_button)
+ boardStates[i - 2][j - 2] = 3
+
+ blackWillEat.add((mutableListOf(i-2, j-2, 0)))
+ paintRecursiveBlueKing(i - 2, j - 2, blackWillEat.size - 1)
+ }
+ }
+ // top right
+ if(j < 6){
+ if(boardStates[i - 2][j + 2] == 0 && boardStates[i - 1][j + 1] == 1){
+ boardButtons[i - 2][j + 2].setImageResource(R.drawable.ic_blue_button)
+ boardStates[i - 2][j + 2] = 3
+
+ blackWillEat.add((mutableListOf(i-2, j+2, 1)))
+ paintRecursiveBlueKing(i - 2, j + 2, blackWillEat.size - 1)
+ }
+ }
+ }
+ prevClicked[0] = i
+ prevClicked[1] = j
+ }
+
+
+ private fun paintRecursiveBlueKing(i: Int, j:Int, index: Int){
+ if(blackWillEat[index].size > 14)
+ return
+
+ if(i > 1){
+ if(j > 1){
+ if(boardStates[i - 2][j - 2] == 0 && boardStates[i - 1][j - 1] == 1){
+ boardButtons[i - 2][j - 2].setImageResource(R.drawable.ic_blue_button)
+ boardStates[i - 2][j - 2] = 3
+ boardStates[i][j] = 0
+ boardButtons[i][j].setImageResource(R.drawable.ic_white_button)
+
+ val moveTopLeft = (mutableListOf(i - 2, j - 2) + blackWillEat[index].drop(2)) as MutableList<Int>
+ moveTopLeft.add(0)
+ blackWillEat.add(moveTopLeft)
+ paintRecursiveBlueKing(i - 2,j - 2, blackWillEat.size - 1)
+ }
+ }
+ if(j < 6){
+ if(boardStates[i - 2][j + 2] == 0 && boardStates[i - 1][j + 1] == 1){
+ boardButtons[i - 2][j + 2].setImageResource(R.drawable.ic_blue_button)
+ boardStates[i - 2][j + 2] = 3
+ boardStates[i][j] = 0
+ boardButtons[i][j].setImageResource(R.drawable.ic_white_button)
+
+ val moveTopRight = (mutableListOf(i - 2, j + 2) + blackWillEat[index].drop(2)) as MutableList<Int>
+ moveTopRight.add(1)
+ blackWillEat.add(moveTopRight)
+ paintRecursiveBlueKing(i - 2,j + 2, blackWillEat.size - 1)
+ }
+ }
+ }
+
+ if(i < 6){
+ if(j > 1){
+ if(boardStates[i + 2][j - 2] == 0 && boardStates[i + 1][j - 1] == 1){
+ boardButtons[i + 2][j - 2].setImageResource(R.drawable.ic_blue_button)
+ boardStates[i + 2][j - 2] = 3
+ boardStates[i][j] = 0
+ boardButtons[i][j].setImageResource(R.drawable.ic_white_button)
+
+ val moveBottomLeft = (mutableListOf(i + 2, j - 2) + blackWillEat[index].drop(2)) as MutableList<Int>
+ moveBottomLeft.add(2)
+ blackWillEat.add(moveBottomLeft)
+ paintRecursiveBlueKing(i + 2,j - 2, blackWillEat.size - 1)
+ }
+ }
+ if(j < 6){
+ if(boardStates[i + 2][j + 2] == 0 && boardStates[i + 1][j + 1] == 1){
+ boardButtons[i + 2][j + 2].setImageResource(R.drawable.ic_blue_button)
+ boardStates[i + 2][j + 2] = 3
+ boardStates[i][j] = 0
+ boardButtons[i][j].setImageResource(R.drawable.ic_white_button)
+
+ val moveBottomRight = (mutableListOf(i + 2, j + 2) + blackWillEat[index].drop(2)) as MutableList<Int>
+ moveBottomRight.add(3)
+ blackWillEat.add(moveBottomRight)
+ paintRecursiveBlueKing(i + 2,j + 2, blackWillEat.size - 1)
+ }
+ }
+ }
+ }
+
+
+
+
+ else{
+ var blackTarget = listOf(0,0)
+ for(item in blackWillEat){
+ if(item[0] == i && item[1] == j){
+ blackTarget = item
+ break
+ }
+ }
+ var xx = x
+ var yy = y
+ for(i in 2 until blackTarget.size){
+ if(blackTarget[i] == 0){
+ boardButtons[xx - 1][yy - 1].setImageResource(R.drawable.ic_white_button)
+ boardStates[xx - 1][yy - 1] = 0
+ kingStates[xx - 1][yy - 1] = false
+ xx -= 2
+ yy -= 2
+ }
+ else if (blackTarget[i] == 1){
+ boardButtons[xx - 1][yy + 1].setImageResource(R.drawable.ic_white_button)
+ boardStates[xx - 1][yy + 1] = 0
+ kingStates[xx - 1][yy + 1] = false
+ xx -= 2
+ yy += 2
+ }
+ else if (blackTarget[i] == 2){
+ boardButtons[xx + 1][yy - 1].setImageResource(R.drawable.ic_white_button)
+ boardStates[xx + 1][yy - 1] = 0
+ kingStates[xx + 1][yy - 1] = false
+ xx += 2
+ yy -= 2
+ }
+ else if (blackTarget[i] == 3){
+ boardButtons[xx + 1][yy + 1].setImageResource(R.drawable.ic_white_button)
+ boardStates[xx + 1][yy + 1] = 0
+ kingStates[xx + 1][yy + 1] = false
+ xx += 2
+ yy += 2
+ }
+ redButtonCount--
+ }
+ }
+ */
